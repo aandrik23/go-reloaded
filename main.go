@@ -33,6 +33,7 @@ func main() {
 
 func modifyText(text string) string {
 	text = handleHexAndBin(text)
+	text = handleCaseChanges(text)
 	return text
 }
 
@@ -59,29 +60,46 @@ func handleCaseChanges(text string) string {
 		`(\b\w+\b) \(low(?:, (\d+))?\)`,
 		`(\b\w+\b) \(cap(?:, (\d+))?\)`,
 	}
+	for _, pattern := range casePatterns {
+		text = regexpReplace(text, pattern, func(match string) string {
+			parts := strings.Fields(match)
+			word := parts[0]
+			var count int
+			if len(parts) > 1 {
+				if c, err := strconv.Atoi(parts[1]); err == nil {
+					count = c
+				}
+			}
 
-// 	for _, pattern := range casePatterns {
-// 		text = regexpReplace(text, pattern, func(match string, groups []string) string {
-// 			word := groups[0]
-// 			count := 1
-// 			if len(groups) > 1 && groups[1] != "" {
-// 				count, _ = strconv.Atoi(groups[1])
-// 			}
+			if strings.Contains(match, "up") {
+				return toUpperCase(word, count)
+			} else if strings.Contains(match, "low") {
+				return toLowerCase(word, count)
+			} else if strings.Contains(match, "cap") {
+				return capitalizeWords(word)
+			}
+			return match
+		})
+	}
 
-// 			switch {
-// 			case strings.Contains(pattern, "(up"):
-// 				return strings.ToUpper(strings.Join(strings.Fields(text), " ")[:count])
-// 			case strings.Contains(pattern, "(low"):
-// 				return strings.ToLower(strings.Join(strings.Fields(text), " ")[:count])
-// 			case strings.Contains(pattern, "(cap"):
-// 				return capitalizeWords(strings.Join(strings.Fields(text), " ")[:count])
-// 			}
-// 			return match
-// 		})
-// 	}
+	return text
+}
 
-// 	return text
-// }
+func toUpperCase(word string, count int) string {
+	words := strings.Fields(word)
+	for i := 0; i < count && i < len(words); i++ {
+		words[i] = strings.ToUpper(words[i])
+	}
+	return strings.Join(words, " ")
+}
+
+func toLowerCase(word string, count int) string {
+	words := strings.Fields(word)
+	for j := 0; j < count && j < len(words); j++ {
+		words[j] = strings.ToLower(words[j])
+	}
+	return strings.Join(words, " ")
+}
 
 func capitalizeWords(s string) string {
 	words := strings.Fields(s)
@@ -91,6 +109,29 @@ func capitalizeWords(s string) string {
 		}
 	}
 	return strings.Join(words, " ")
+}
+
+func handlePunctuation(text string) string {
+	re1 := regexp.MustCompile(`\s*([.,?!;:])\s*`)
+	result1 := re1.ReplaceAllString(text, "$1")
+	fmt.Println(result1)
+
+	text = strings.ReplaceAll(text, " .", ".")
+	text = strings.ReplaceAll(text, " ,", ",")
+	text = strings.ReplaceAll(text, " ?", "?")
+	text = strings.ReplaceAll(text, " !", "!")
+	text = strings.ReplaceAll(text, " ;", ";")
+	text = strings.ReplaceAll(text, " :", ":")
+
+	re2 := regexp.MustCompile(`'\s+([^'])\s+'`)
+	result2 := re2.ReplaceAllString(text, "'$1'")
+	fmt.Println(result2)
+
+	re3 := regexp.MustCompile(`'\s+([^'])'`)
+	result3 := re3.ReplaceAllString(text, "'$1'")
+	fmt.Println(result3)
+
+	return text
 }
 
 func regexpReplace(text string, pattern string, replaceFunc func(string) string) string {
