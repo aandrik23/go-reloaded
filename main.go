@@ -23,7 +23,7 @@ func main() {
 
 	}
 
-	modifiedText := modifyText(string(content))
+	modifiedText := ModifyText(string(content))
 
 	err = os.WriteFile(outputFile, []byte(modifiedText), 0644)
 	if err != nil {
@@ -31,9 +31,11 @@ func main() {
 	}
 }
 
-func modifyText(text string) string {
+func ModifyText(text string) string {
 	text = handleHexAndBin(text)
 	text = handleCaseChanges(text)
+	text = handlePunctuation(text)
+	text = handleArticle(text)
 	return text
 }
 
@@ -132,6 +134,12 @@ func handlePunctuation(text string) string {
 	fmt.Println(result3)
 
 	return text
+}
+
+func handleArticle(text string) string {
+	articlePattern := regexp.MustCompile(`(?i)\b(a)\s+([aeiouh])`)
+	result := articlePattern.ReplaceAllString(text, "an $2")
+	return result
 }
 
 func regexpReplace(text string, pattern string, replaceFunc func(string) string) string {

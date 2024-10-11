@@ -29,10 +29,34 @@ func TestModifyText(t *testing.T) {
 			"Welcome to the Brooklyn bridge (cap)",
 			"Welcome to the Brooklyn Bridge",
 		},
+		{
+			"This is so exciting (up, 2)",
+			"This is SO EXCITING",
+		},
+		{
+			"I was sitting over there ,and then BAMM !!",
+			"I was sitting over there, and then BAMM!!",
+		},
+		{
+			"I was thinking ... You were right",
+			"I was thinking... You were right",
+		},
+		{
+			"I am exactly how they describe me: ' awesome '",
+			"I am exactly how they describe me: 'awesome'",
+		},
+		{
+			"As Elton John said: ' I am the most well-known homosexual in the world '",
+			"As Elton John said: 'I am the most well-known homosexual in the world'",
+		},
+		{
+			"There it was. A amazing rock!",
+			"There it was. An amazing rock!",
+		},
 	}
 
 	for _, test := range tests {
-		result := modifyText(test.input)
+		result := ModifyText(test.input)
 		if result != test.output {
 			t.Errorf("Expected '%s' but go '%s'", test.output, result)
 		}
