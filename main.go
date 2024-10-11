@@ -25,7 +25,7 @@ func main() {
 
 	modifiedText := ModifyText(string(content))
 
-	err = os.WriteFile(outputFile, []byte(modifiedText), 0644)
+	err = os.WriteFile(outputFile, []byte(modifiedText), 0o644)
 	if err != nil {
 		fmt.Println("Error writing to file", err)
 	}
