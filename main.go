@@ -56,20 +56,83 @@ func handleHexAndBin(text string) string {
 	return text
 }
 
+// func handleCaseChanges(text string) string {
+// 	casePatterns := []string{
+// 		`(\b\w+(?: \w+)*\b) \(up(?:, (\d+))?\)`,
+// 		`(\b\w+(?: \w+)*\b) \(low(?:, (\d+))?\)`,
+// 		`(\b\w+(?: \w+)*\b) \(cap(?:, (\d+))?\)`,
+// 	}
+
+// 	for _, pattern := range casePatterns {
+// 		re := regexp.MustCompile(pattern)
+// 		text = re.ReplaceAllStringFunc(text, func(match string) string {
+// 			parts := re.FindStringSubmatch(match)
+// 			word := parts[1]
+// 			var count int
+// 			if len(parts) > 2 {
+// 				if c, err := strconv.Atoi(parts[2]); err == nil {
+// 					count = c
+// 				}
+// 			}
+
+// 			if strings.Contains(match, "up") {
+// 				return toUpperCase(word, count)
+// 			} else if strings.Contains(match, "low") {
+// 				return toLowerCase(word, count)
+// 			} else if strings.Contains(match, "cap") {
+// 				return capitalizeWords(word)
+// 			}
+// 			return match
+// 		})
+// 	}
+
+// 	return text
+// }
+
+// func toUpperCase(word string, count int) string {
+// 	words := strings.Fields(word)
+// 	for i := 0; i < count && i < len(words); i++ {
+// 		words[i] = strings.ToUpper(words[i])
+// 	}
+// 	return strings.Join(words, " ")
+// }
+
+// func toLowerCase(word string, count int) string {
+// 	words := strings.Fields(word)
+// 	for j := 0; j < count && j < len(words); j++ {
+// 		words[j] = strings.ToLower(words[j])
+// 	}
+// 	return strings.Join(words, " ")
+// }
+
+// func capitalizeWords(s string) string {
+// 	words := strings.Fields(s)
+// 	for i, word := range words {
+// 		if len(word) > 0 {
+// 			words[i] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
+// 		}
+// 	}
+// 	return strings.Join(words, " ")
+// }
+
 func handleCaseChanges(text string) string {
 	casePatterns := []string{
-		`(\b\w+\b) \(up(?:, (\d+))?\)`,
-		`(\b\w+\b) \(low(?:, (\d+))?\)`,
-		`(\b\w+\b) \(cap(?:, (\d+))?\)`,
+		`(\b\w+(?: \w+)*\b) \(up(?:, (\d+))?\)`,
+		`(\b\w+(?: \w+)*\b) \(low(?:, (\d+))?\)`,
+		`(\b\w+(?: \w+)*\b) \(cap(?:, (\d+))?\)`,
 	}
+
 	for _, pattern := range casePatterns {
-		text = regexpReplace(text, pattern, func(match string) string {
-			parts := strings.Fields(match)
-			word := parts[0]
+		re := regexp.MustCompile(pattern)
+		text = re.ReplaceAllStringFunc(text, func(match string) string {
+			parts := re.FindStringSubmatch(match)
+			word := parts[1]
 			var count int
-			if len(parts) > 1 {
-				if c, err := strconv.Atoi(parts[1]); err == nil {
+			if len(parts) > 2 {
+				if c, err := strconv.Atoi(parts[2]); err == nil {
 					count = c
+				} else {
+					count = -1 // Αρνητική τιμή για να επηρεάσει κανονικά όλες τις λέξεις
 				}
 			}
 
@@ -89,6 +152,9 @@ func handleCaseChanges(text string) string {
 
 func toUpperCase(word string, count int) string {
 	words := strings.Fields(word)
+	if count < 0 {
+		count = len(words) // Μετατρέπουμε όλες τις λέξεις σε κεφαλαία
+	}
 	for i := 0; i < count && i < len(words); i++ {
 		words[i] = strings.ToUpper(words[i])
 	}
@@ -97,6 +163,9 @@ func toUpperCase(word string, count int) string {
 
 func toLowerCase(word string, count int) string {
 	words := strings.Fields(word)
+	if count < 0 {
+		count = len(words) // Μετατρέπουμε όλες τις λέξεις σε πεζά
+	}
 	for j := 0; j < count && j < len(words); j++ {
 		words[j] = strings.ToLower(words[j])
 	}
@@ -107,7 +176,7 @@ func capitalizeWords(s string) string {
 	words := strings.Fields(s)
 	for i, word := range words {
 		if len(word) > 0 {
-			words[i] = strings.ToUpper(string(word[0])) + word[1:]
+			words[i] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
 		}
 	}
 	return strings.Join(words, " ")
