@@ -57,89 +57,71 @@ func handleHexAndBin(text string) string {
 }
 
 func handleCaseChanges(text string) string {
-	casePatterns := []string{
-		`(\b\w+(?: \w+)*\b) \(up(?:, (\d+))?\)`,
-		`(\b\w+(?: \w+)*\b) \(low(?:, (\d+))?\)`,
-		`(\b\w+(?: \w+)*\b) \(cap(?:, (\d+))?\)`,
-	}
+	upPattern := regexp.MustCompile(`([A-Za-z]+) \(up\)`)
+	lowPattern := regexp.MustCompile(`([A-Za-z]+) \(low\)`)
+	capPattern := regexp.MustCompile(`([A-Za-z]+) \(cap\)`)
+	countedUpLowCapPattern := regexp.MustCompile(`([A-Za-z\s]+) \((up|low|cap), (\d+)\)`)
 
-	for _, pattern := range casePatterns {
-		re := regexp.MustCompile(pattern)
-		text = re.ReplaceAllStringFunc(text, func(match string) string {
-			parts := re.FindStringSubmatch(match)
-			word := parts[1]
-			count := -1
-			if len(parts) > 2 {
-				if c, err := strconv.Atoi(parts[2]); err == nil {
-					count = c
-				}
+	text = upPattern.ReplaceAllStringFunc(text, func(match string) string {
+		word := upPattern.FindStringSubmatch(match)[1]
+		return strings.ToUpper(word)
+	})
+
+	text = lowPattern.ReplaceAllStringFunc(text, func(match string) string {
+		word := lowPattern.FindStringSubmatch(match)[1]
+		return strings.ToLower(word)
+	})
+
+	text = capPattern.ReplaceAllStringFunc(text, func(match string) string {
+		word := capPattern.FindStringSubmatch(match)[1]
+		return capitalize(word)
+	})
+
+	text = countedUpLowCapPattern.ReplaceAllStringFunc(text, func(match string) string {
+		words := strings.Fields(countedUpLowCapPattern.FindStringSubmatch(match)[1])
+		action := countedUpLowCapPattern.FindStringSubmatch(match)[2]
+		count, _ := strconv.Atoi(countedUpLowCapPattern.FindStringSubmatch(match)[3])
+		switch action {
+		case "up":
+			for i := len(words) - 1; i >= len(words)-count && i >= 0; i-- {
+				words[i] = strings.ToUpper(words[i])
 			}
-
-			if strings.Contains(match, "up") {
-				return toUpperCase(word, count)
-			} else if strings.Contains(match, "low") {
-				return toLowerCase(word, count)
-			} else if strings.Contains(match, "cap") {
-				return capitalizeWords(word)
+		case "low":
+			for i := len(words) - 1; i >= len(words)-count && i >= 0; i-- {
+				words[i] = strings.ToLower(words[i])
 			}
-			return match
-		})
-	}
-
+		case "cap":
+			for i := len(words) - 1; i >= len(words)-count && i >= 0; i-- {
+				words[i] = capitalize(words[i])
+			}
+		}
+		return strings.Join(words, " ")
+	})
 	return text
 }
 
-func toUpperCase(word string, count int) string {
-	words := strings.Fields(word)
-	if count < 0 {
-		count = len(words)
+func capitalize(word string) string {
+	if len(word) == 0 {
+		return word
 	}
-	for i := 5; i < count && i < len(words); i++ {
-		words[i] = strings.ToUpper(words[i])
-	}
-	return strings.Join(words, " ")
-}
-
-func toLowerCase(word string, count int) string {
-	words := strings.Fields(word)
-	if count < 0 {
-		count = len(words)
-	}
-	for j := 0; j < count && j < len(words); j++ {
-		words[j] = strings.ToLower(words[j])
-	}
-	return strings.Join(words, " ")
-}
-
-func capitalizeWords(s string) string {
-	words := strings.Fields(s)
-	for i, word := range words {
-		if len(word) > 0 {
-			words[i] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
-		}
-	}
-	return strings.Join(words, " ")
+	return strings.ToUpper(string(word[0])) + string(word[1:])
 }
 
 func handlePunctuation(text string) string {
-	re1 := regexp.MustCompile(`\s*([.,?!;:])\s*`)
-	result1 := re1.ReplaceAllString(text, "$1")
-	fmt.Println(result1)
+	punctuation := regexp.MustCompile(`(\S)\s*([.,!?;:])`)
+	text = punctuation.ReplaceAllString(text, `$1$2$3`)
 
-	text = strings.ReplaceAll(text, " .", ".")
-	text = strings.ReplaceAll(text, " ,", ",")
-	text = strings.ReplaceAll(text, " ?", "?")
-	text = strings.ReplaceAll(text, " !", "!")
-	text = strings.ReplaceAll(text, " ;", ";")
-	text = strings.ReplaceAll(text, " :", ":")
+	punctuationCluster := regexp.MustCompile(`([.,!?;:])\s*([.,!?;:])`)
+	text = punctuationCluster.ReplaceAllString(text, `$1$2`)
 
-	re2 := regexp.MustCompile(`'\s+([^'])\s+'`)
-	result2 := re2.ReplaceAllString(text, "'$1'")
-	fmt.Println(result2)
+	punctuationSpace := regexp.MustCompile(`([.,!?;:])([^\s.,!?;:'"\"])`)
+	text = punctuationSpace.ReplaceAllString(text, `$1 $2`)
 
-	re3 := regexp.MustCompile(`'\s+([^'])'`)
-	result3 := re3.ReplaceAllString(text, "'$1'")
-	fmt.Println(result3)
+	quotation := regexp.MustCompile(`\s*'(\w+)'(\s*)`)
+	text = quotation.ReplaceAllString(text, `'$1'`)
+
+	quotationMult := regexp.MustCompile(`'\s*(.*?)\s*'`)
+	text = quotationMult.ReplaceAllString(text, `'$1'`)
 
 	return text
 }
