@@ -39,9 +39,10 @@ func ModifyText(text string) string {
 	return text
 }
 
+// handleHexAndBin converts hexadecimal and binary values in the text to their decimal equivalents.
 func handleHexAndBin(text string) string {
-	hexPattern := `(\b[0-9A-Fa-f]+\b) \(hex\)`
-	binPattern := `(\b[0-1]+\b) \(bin\)`
+	hexPattern := `(\b[0-9A-Fa-f]+\b) \(hex\)` //matches one or more characters that are digits (0-9) or letters (A-F or a-f).
+	binPattern := `(\b[0-1]+\b) \(bin\)`       //matches one or more characters that are either 0 or 1.
 
 	text = regexpReplace(text, hexPattern, func(match string) string {
 		hexVal, _ := strconv.ParseInt(strings.TrimSpace(strings.Split(match, " ")[0]), 16, 0)
@@ -56,6 +57,7 @@ func handleHexAndBin(text string) string {
 	return text
 }
 
+// upPattern, lowPattern, and capPattern handle word transformations specified as '(up)', '(low)', or '(cap)'
 func handleCaseChanges(text string) string {
 	upPattern := regexp.MustCompile(`([A-Za-z]+) \(up\)`)
 	lowPattern := regexp.MustCompile(`([A-Za-z]+) \(low\)`)
@@ -77,6 +79,7 @@ func handleCaseChanges(text string) string {
 		return capitalize(word)
 	})
 
+	// countedUpLowCapPattern handles transformations where the case change is limited to a specified number
 	text = countedUpLowCapPattern.ReplaceAllStringFunc(text, func(match string) string {
 		words := strings.Fields(countedUpLowCapPattern.FindStringSubmatch(match)[1])
 		action := countedUpLowCapPattern.FindStringSubmatch(match)[2]
